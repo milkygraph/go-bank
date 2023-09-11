@@ -18,7 +18,6 @@ func createRandomAccount(t *testing.T) Account {
 	}
 
 	account, err := testQueries.CreateAccount(context.Background(), arg)
-
 	require.NoError(t, err)
 	require.NotEmpty(t, account)
 
@@ -69,6 +68,23 @@ func TestUpdateAccount(t *testing.T) {
 	require.Equal(t, arg.Owner, account2.Owner)
 	require.Equal(t, arg.Balance, account2.Balance)
 	require.Equal(t, arg.Currency, account2.Currency)
+}
+
+func TestAddAccountBalance(t *testing.T) {
+	account1 := createRandomAccount(t)
+	arg := AddAccountBalanceParams{
+		ID:     account1.ID,
+		Amount: util.RandMoney(),
+	}
+
+	account2, err := testQueries.AddAccountBalance(context.Background(), arg)
+
+	require.NoError(t, err)
+	require.NotEmpty(t, account2)
+	require.Equal(t, account1.ID, account2.ID)
+	require.Equal(t, account1.Owner, account2.Owner)
+	require.Equal(t, account1.Currency, account2.Currency)
+	require.Equal(t, account1.Balance+arg.Amount, account2.Balance)
 }
 
 func TestDeleteAccount(t *testing.T) {
