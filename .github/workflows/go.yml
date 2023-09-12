@@ -34,12 +34,18 @@ jobs:
       with:
         go-version: '1.18.1'
 
-    - name: Install migrate
-      run: curl -L https://github.com/golang-migrate/migrate/releases/download/v4.12.2/migrate.linux-amd64.tar.gz --output migrate.tar.gz \ 
-          tar -xf migrate.tar.gz \
-          sudo mv migrate.linux-amd64 /usr/bin/ \ 
-          which migrate
-          
+    - name: Download migrate
+      run: curl -L https://github.com/golang-migrate/migrate/releases/download/v4.12.2/migrate.linux-amd64.tar.gz --output migrate.tar.gz 
+    
+    - name: Extract migrate
+      run: tar -xf migrate.tar.gz
+    
+    - name: Move migrate
+      run: sudo mv migrate.linux-amd64 /usr/bin/migrate
+    
+    - name: Check migrate
+      run: which migrate
+    
     - name: Run migration
       run: make migrateup
         
