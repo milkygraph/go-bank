@@ -36,3 +36,7 @@ func RandCurrency() string {
 	n := len(currencies)
 	return currencies[RandInt(0, n)]
 }
+
+func RandEmail() string {
+	return RandString(6) + "@email.com"
+}
