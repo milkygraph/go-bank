@@ -2,11 +2,13 @@ package api
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	db "github.com/milkygraph/simplebank/db/sqlc"
+	"github.com/milkygraph/simplebank/token"
 )
 
 type transferRequest struct {
@@ -23,12 +25,25 @@ func (server *Server) createTransfer(ctx *gin.Context) {
 		return
 	}
 
-	if !server.validCurrency(ctx, req.FromAccountID, req.Currency) {
+	account, ok := server.validAccount(ctx, req.FromAccountID, req.Currency)
+	if !ok {
+		return
+	}
+
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+	if account.Owner != authPayload.Username {
+		err := errors.New("account doesn't belong to the authenticated user")
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	_, ok = server.validAccount(ctx, req.ToAccountID, req.Currency)
+	if !ok {
 		return
 	}
 
 	arg := db.TransferTxParams{
-		FromAccountID: req.FromAccountID,
+		FromAccountID: account.ID,
 		ToAccountID:   req.ToAccountID,
 		Amount:        req.Amount,
 	}
@@ -42,23 +57,23 @@ func (server *Server) createTransfer(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, transfer)
 }
 
-func (server *Server) validCurrency(ctx *gin.Context, fromAccountID int64, currency string) bool {
+func (server *Server) validAccount(ctx *gin.Context, fromAccountID int64, currency string) (db.Account, bool) {
 	fromAccount, err := server.store.GetAccount(ctx, fromAccountID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
-			return false
+			return fromAccount, false
 		} else {
 			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-			return false
+			return fromAccount, false
 		}
 	}
 
 	if fromAccount.Currency != currency {
 		err := fmt.Errorf("currency mismatch: %s vs %s", fromAccount.Currency, currency)
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return false
+		return fromAccount, false
 	}
 
-	return true
+	return fromAccount, true
 }
