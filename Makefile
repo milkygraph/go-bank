@@ -1,5 +1,8 @@
 postgres:
-	docker run --name postgres -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=kurero17 -d postgres:12-alpine
+	docker run --name postgres --network bank-network -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=kurero17 -d postgres:12-alpine
+
+docker_server:
+	docker run --name go-bank --network bank-network -p 8080:8080 -e DB_SOURCE="postgresql://root:kurero17@postgres:5432/simple_bank?sslmode=disable" go-bank:latest
 
 remove-postgres:
 	docker rm -f postgres
