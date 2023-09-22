@@ -17,12 +17,12 @@ type Payload struct {
 	ID        uuid.UUID `json:"id"`
 	Username  string    `json:"username"`
 	CreatedAt time.Time `json:"created_at"`
-	ExpiredAt time.Time `json:"expired_at"`
+	ExpiresAt time.Time `json:"expired_at"`
 }
 
 // Valid method that implements jwt.Claims interface
 func (p *Payload) Valid() error {
-	if time.Now().After(p.ExpiredAt) {
+	if time.Now().After(p.ExpiresAt) {
 		return ErrTokenExpired
 	}
 	return nil
@@ -39,6 +39,6 @@ func NewPayload(username string, duration time.Duration) (*Payload, error) {
 		ID:        tokenID,
 		Username:  username,
 		CreatedAt: time.Now(),
-		ExpiredAt: time.Now().Add(duration),
+		ExpiresAt: time.Now().Add(duration),
 	}, nil
 }
